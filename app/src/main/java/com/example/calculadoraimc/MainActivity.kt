@@ -1,5 +1,7 @@
 package com.example.calculadoraimc
 
+import android.R.attr.fontWeight
+import android.R.attr.onClick
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -36,7 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeighttat
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calculadoraimc.ui.theme.CalculadoraIMCTheme
@@ -115,7 +119,7 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(300.dp)
+                            .size(360.dp)
                             .offset(y = (-30).dp) // O offset tira o componente da orientação padrão do layout movendo -30.dp, ou seja, o elevando 30.dp
 
                         ,
@@ -144,13 +148,18 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                                 value = altura,
                                 onValueChange = {altura = it},
                                 label = {
-                                    Text("Altura")
+                                    Text("Altura (cm)")
                                 },
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF1D3557),
                                     unfocusedBorderColor = colorResource(id = R.color.azul_header),
-                                    focusedLabelColor = colorResource(id = R.color.azul_header)
+                                    focusedLabelColor = colorResource(id = R.color.azul_header),
+                                    unfocusedLabelColor = Color(0xFF858484)
                                 ),
-                                shape = RoundedCornerShape(15.dp)
+                                shape = RoundedCornerShape(15.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                )
                             )
 
                             Spacer(Modifier.size(20.dp))
@@ -159,22 +168,42 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                                 value = peso,
                                 onValueChange = {peso = it},
                                 label = {
-                                    Text("Peso")
+                                    Text("Peso (Kg)")
                                 },
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF1D3557),
                                     unfocusedBorderColor = colorResource(id = R.color.azul_header),
-                                    focusedLabelColor = colorResource(id = R.color.azul_header)
+                                    focusedLabelColor = colorResource(id = R.color.azul_header),
+                                    unfocusedLabelColor = Color(0xFF858484)
                                 ),
-                                shape = RoundedCornerShape(15.dp)
+                                shape = RoundedCornerShape(15.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                )
                             )
 
+                            Spacer(Modifier.size(25.dp))
+
                             Button(
-                                modifier = Modifier.fillMaxWidth().padding(15.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 0.dp),
                                 onClick = {
-                                     imc = DecimalFormat("#,##0.0")
-                                         .format(
-                                             calcularIMC(altura.toDouble(), peso.toDouble())
-                                         )
+
+                                    if (
+                                            altura
+                                            .toDoubleOrNull() != null
+                                            &&
+                                            peso
+                                                .toDoubleOrNull() != null
+                                        ){
+                                        imc = DecimalFormat("#,##0.0")
+                                            .format(
+                                                calcularIMC(altura.toDouble(), peso.toDouble())
+                                            )
+
+                                        categoriaIMC = definirCategoriaImc(imc.toDouble())
+                                    }
+
+
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = colorResource(id = R.color.azul_header),
@@ -188,10 +217,35 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                                     fontSize = 16.sp
                                 )
                             }
+
+                            Spacer(Modifier.size(1.dp))
+
+                            Button(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 0.dp),
+                                onClick = {
+                                    altura = ""
+                                    peso = ""
+                                    imc = ""
+                                    categoriaIMC = ""
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colorResource(id = R.color.azul_header),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(
+                                    text = "LIMPAR",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                            }
                         }
                     }
 
                     Spacer(Modifier.size(50.dp))
+
+
 
                     /*Card resultado*/
 
@@ -201,7 +255,7 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                             .height(90.dp)
                         ,
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF329f6B)
+                            containerColor = colorirCard(categoriaIMC)
                         ),
                         shape = RoundedCornerShape(15.dp),
                         elevation = CardDefaults.cardElevation(4.dp)
@@ -224,8 +278,8 @@ fun IMCScreen(modifier: Modifier = Modifier) {
                             Spacer(Modifier.size(30.dp))
 
                             Text(
-                                text = "Peso Ideal", // <- Aqui será uma variável
-                                fontSize = 28.sp,
+                                text = categoriaIMC, // <- Aqui será uma variável
+                                fontSize = 20.sp,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
@@ -237,9 +291,32 @@ fun IMCScreen(modifier: Modifier = Modifier) {
     }
 }
 
-fun calcularIMC(altura: Double, peso:Double): Double{
-    if (altura == 0.0 || peso == 0.0)
+fun calcularIMC(alturaCentimetro: Double, peso:Double): Double{
+    if (alturaCentimetro == 0.0 || peso == 0.0)
         return 0.0
 
-    return peso / (altura * altura)
+    val alturaMetro = alturaCentimetro / 100
+
+    return peso / (alturaMetro * alturaMetro)
+}
+fun definirCategoriaImc(imc: Double): String{
+    if (imc < 18.5) return "Abaixo do peso"
+    else if(imc < 25) return "Peso Ideal"
+    else if (imc < 30) return "Levemente acima do peso"
+    else if (imc < 35) return "Obesidade Grau I"
+    else if (imc < 40) return "Obesidade Grau II"
+    else return "Obesidade Grau III"
+}
+
+@Composable
+fun colorirCard(categoria: String): Color{
+    if (categoria.equals(""))
+        return Color(0xFFEDEDED)
+
+    if (categoria.uppercase().equals("PESO IDEAL"))
+        return colorResource(id = R.color.peso_ideal)
+    else if (categoria.uppercase().equals("LEVEMENTE ACIMA DO PESO"))
+        return colorResource(R.color.levemente_acima_peso)
+    else
+        return colorResource(R.color.peso_abaixo_obesidade)
 }
